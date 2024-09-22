@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Models\Expert;
 use App\Models\Student;
 use Illuminate\Http\Request;
@@ -14,116 +16,38 @@ use Exception;
 use Illuminate\Support\Facades\Validator;
 use App\Mail\VerificationEmail;
 use App\Models\Wallet;
+use App\Services\AuthService;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
-    public function __construct()
+    protected $authService;
+    public function __construct(AuthService $authService1)
     {
+        $this->authService = $authService1;
         $this->middleware('auth:api', ['except' => ['login', 'register']]);
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-        $credentials = $request->only('email', 'password');
-        $token = Auth::attempt($credentials);
-
-        if (!$token) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 401);
-        }
-
-        $user = Auth::user();
-        return response()->json([
-            'user' => $user,
-            'authorization' => [
-                'token' => $token,
-                'type' => 'bearer',
-            ]
-        ]);
+        return $this->authService->login($request);
     }
 
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        try {
-
-            DB::beginTransaction();
-
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:6',
-                'role' => 'required|string|max:7',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), 422);
-            }
-
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'role' => $request->role,
-            ]);
-
-            if($request->role == "Student") {
-                $this->UserProfile($user->id);
-                $this->addBalance($user->id);
-            }
-
-            DB::commit();
-            return response()->json([
-                'message' => 'User created successfully',
-                'user' => $user
-            ]);
-
-        } catch(Exception $e) {
-            DB::rollback();
-            return $e->getMessage();
-        }
+        return $this->authService->register($request);
     }
-
 
     public function logout()
     {
-        Auth::logout();
-        return response()->json([
-            'message' => 'Successfully logged out',
-        ]);
+        return $this->authService->logout();
+
     }
 
     public function refresh()
     {
-        return response()->json([
-            'user' => Auth::user(),
-            'authorisation' => [
-                'token' => Auth::refresh(),
-                'type' => 'bearer',
-            ]
-        ]);
+        return $this->authService->refresh();
     }
 
-
-    public function addBalance($id)
-    {
-        Wallet::create([
-            'amount' => 1000000,
-            'user_id' => $id
-        ]);
-    }
-
-    public function UserProfile($id)
-    {
-        Student::create([
-           'user_id' => $id,
-           'last_searching' => "programing"
-        ]);
-    }
 
 }

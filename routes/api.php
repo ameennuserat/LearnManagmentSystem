@@ -3,9 +3,18 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Expert\ExpertController;
-use App\Http\Controllers\Student\StudentController;
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\FrequentlyQuestionController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChoiceController;
+use App\Http\Controllers\DiscountController;
+use App\Http\Controllers\EnrolmentCourseController;
+use App\Http\Controllers\ExpertController;
+use App\Http\Controllers\QuizController;
+use App\Http\Controllers\QuizItemController;
+use App\Http\Controllers\StudentController ;
+use App\Http\Controllers\VideoController;
+use App\Http\Controllers\VideoGroupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,60 +35,70 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('refresh', 'refresh');
 });
 
-Route::controller(AdminController::class)->middleware('checkadmin')->prefix('admin/dashboard')->group(function () {
-    Route::post('/courses', 'AddCourse');
-    Route::put('/courses/{id}', 'UpdatetCourse');
-    Route::delete('/courses/{id}', 'DeleteCourse');
+Route::controller(FrequentlyQuestionController::class)->middleware('checkadmin')->group(function () {
     Route::post('/frequently', 'addFrequentlyquestion');
     Route::delete('/frequently/{id}', 'deleteFrequentlyquestion');
 });
 
-Route::controller(ExpertController::class)->middleware('checkexpert')->prefix('expert/')->group(function () {
-    Route::post('/profile', 'AddProfileInfo');
-    Route::put('/profile/{id}', 'UpdateProfile');
-    Route::post('/image', 'updateImage');
-
-    Route::post('/videogroup', 'addVideoGroup');
-    Route::delete('/videogroup/{id}', 'deleteVideoGroup');
-
-    Route::post('/video', 'addVideo');
-    Route::put('/video/{id}', 'updateVideo');
-    Route::delete('/video/{id}', 'deleteVideo');
-
-    Route::post('/quiz', 'addQuiz');
-    Route::put('/quiz/{id}', 'updateQuiz');
-    Route::delete('/quiz/{id}', 'deleteQuiz');
-
-    Route::post('/quizitem', 'addQuizItem');
+Route::controller(CourseController::class)->group(function () {
+    Route::post('/courses/{id}', 'AddCourse')->middleware('checkadmin');
+    Route::put('/courses/{id}', 'UpdatetCourse')->middleware('checkadmin');
+    Route::delete('/courses/{id}', 'DeleteCourse')->middleware('checkadmin');
+    Route::get('/courses/{id}', 'getCourses');
+    Route::get('/enrolments/{id}', 'getCoursesOfStudent');
+    Route::get('/searchcourse/{name}', 'searchCourse');
+});
+Route::controller(VideoGroupController::class)->group(function () {
+    Route::post('/videogroup/{id}', 'addVideoGroup')->middleware('checkexpert');
+    Route::delete('/videogroup/{id}', 'deleteVideoGroup')->middleware('checkexpert');
+    Route::get('/videogroups/{id}', 'getVideoGroups');
+});
+Route::controller(VideoController::class)->group(function () {
+    Route::post('/video', 'addVideo')->middleware('checkexpert');
+    Route::put('/video/{id}', 'updateVideo')->middleware('checkexpert');
+    Route::delete('/video/{id}', 'deleteVideo')->middleware('checkexpert');
+    Route::get('/videos/{id}', 'getVideos');
+});
+Route::controller(QuizController::class)->group(function () {
+    Route::post('/quiz/{id}', 'addQuiz')->middleware('checkexpert');
+    Route::put('/quiz/{id}', 'updateQuiz')->middleware('checkexpert');
+    Route::delete('/quiz/{id}', 'deleteQuiz')->middleware('checkexpert');
+    Route::get('/quiz/{id}', 'getQuiz');
+    Route::post('/quize/{id}', 'checkresult')->middleware('checkstudent');
+});
+Route::controller(QuizItemController::class)->middleware('checkexpert')->group(function () {
+    Route::post('/quizitem/{id}', 'addQuizItem');
     Route::put('/quizitem/{id}', 'updateQuizItem');
     Route::delete('/quizitem/{id}', 'deleteQuizItem');
-
+});
+Route::controller(ChoiceController::class)->middleware('checkexpert')->group(function () {
     Route::post('/choice', 'addChoice');
     Route::delete('/choice/{id}', 'deleteChoice');
-
-
-    Route::post('/discount', 'addDiscount');
+});
+Route::controller(DiscountController::class)->middleware('checkexpert')->group(function () {
+    Route::post('/discount/{id}', 'addDiscount');
     Route::delete('/discount/{id}', 'cancelDiscount');
+});
 
-    Route::get('/students/{id}', 'getStudentsInCourse');
-    Route::get('/students/{id}', 'getStudentsInCourse');
+Route::controller(ExpertController::class)->group(function () {
+    Route::post('/profile', 'AddProfileInfo')->middleware('checkexpert');
+    Route::put('/profile/{id}', 'UpdateProfile')->middleware('checkexpert');
+    Route::post('/image/{id}', 'updateImage')->middleware('checkexpert');
+    Route::get('/searchexpert/{name}', 'searchExpert');
+    Route::get('/profiles', 'getProfilesExperts');
+});
 
+Route::controller(CategoryController::class)->group(function () {
+    Route::get('/explorecourse', 'getExplore')->middleware('checkstudent');
+    Route::get('/category', 'getCategory');
+});
+
+Route::controller(EnrolmentCourseController::class)->group(function () {
+    Route::post('/student/course/{id}', 'enrolmentCourse')->middleware('checkstudent');
 });
 
 Route::controller(StudentController::class)->group(function () {
-
-    Route::get('/category', 'getCategory');
-    Route::get('/courses/{id}', 'getCourses');
-    Route::get('/enrolments/{id}', 'getCoursesOfStudent');
-    Route::post('/student/course', 'enrolmentCourse')->middleware('checkstudent');
-    Route::get('/videogroups/{id}', 'getVideoGroups');
-    Route::get('/videos/{id}', 'getVideos');
-    Route::get('/quiz/{id}', 'getQuiz');
-    Route::post('/quize', 'checkresult');
-    Route::get('/profiles', 'getProfileExperts');
-    Route::get('/explorecourse', 'getExplore');
-    Route::get('/searchcourse/{name}', 'searchCourse');
-    Route::get('/searchexpert/{name}', 'searchExpert');
+    Route::get('/students/{id}', 'getStudentsInCourse');
     Route::get('/explorestudent', 'exploreStudentSuccesses');
 
 
